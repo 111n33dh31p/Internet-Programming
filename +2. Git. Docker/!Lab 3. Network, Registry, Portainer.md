@@ -88,19 +88,3 @@ docker pull jc21/registry-ui - Установка Doker Registry UI
 ```sh
 docker pull shipyard/shipyard - Установка Shipyard
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-```sh
-
-```
