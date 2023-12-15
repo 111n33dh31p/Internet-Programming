@@ -143,3 +143,95 @@ git commit -m 'deploytest'
 git remote add origin git@gitlab.com:MentalDamaged/veu-docker
 git push --set-upstream origin master
 ```
+
+# Практическое задание
+
+1. Создаём одностраничный сайт, при этом пользуемся системой контроля версий Git
+Структура проекта
+```sh
+my_website/
+|-- index.html
+|-- styles.css
+|-- .git/
+|-- .gitignore
+```
+index.html
+```sh
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>My Dockerized Website</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Hello, Docker!</h1>
+        <p>This is my Dockerized single-page website.</p>
+    </div>
+</body>
+</html>
+```
+styles.css
+```sh
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+}
+
+p {
+    color: #666;
+}
+```
+.gitignore
+```sh
+node_modules/
+```
+Инициализация Git и коммит
+```sh
+cd my_website
+git init
+git add .
+git commit -m "Initial commit"
+```
+2. Создаем для него Dockerfile и запускаем его
+Для начала надо создать Dockerfile
+```sh
+# Используем базовый образ с поддержкой веб-сервера
+FROM nginx:latest
+
+# Копируем файлы веб-сайта в рабочую директорию
+COPY . /usr/share/nginx/html
+
+# Ваша директория веб-сайта
+WORKDIR /usr/share/nginx/html
+
+# Открываем порт 80
+EXPOSE 80
+
+# Команда для запуска веб-сервера
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+После чего - запустить
+```sh
+docker build -t my-website .
+docker run -p 8080:80 my-website
+```
+Перейдя по адресу http://localhost:8080, мы увидим одностраничный веб-сайт, который теперь работает в контейнере Docker.
