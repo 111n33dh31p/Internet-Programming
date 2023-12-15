@@ -523,3 +523,73 @@ root@Ubunty-22:/home/noneraspad# docker run -d \
 root@Ubunty-22:/home/noneraspad#
 ```
 
+# Практическое задание
+1. Примонтируйте volume в проект
+```sh
+# Создаем директорию
+mkdir my_volume
+
+# Монтируем volume в контейнер
+docker run -d -v $(pwd)/my_volume:/app/data --name volume_example nginx
+```
+2. Повторите примеры для СУБД PostgreSQL
+```sh
+docker run -d --name postgres_container -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 postgres
+
+# Подключение к контейнеру
+docker exec -it postgres_container psql -U postgres
+
+# Внутри PostgreSQL выполните SQL-запросы для создания таблиц
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    product_name VARCHAR(100) NOT NULL,
+    quantity INT NOT NULL
+);
+
+\q  # выход
+```
+3. Проинспектируйте Docker контейнер из примера 12 на наличие volume
+```sh
+docker inspect container_id
+```
+4. Выполните ПРИМЕР #6 для Nginx
+```sh
+# Используем базовый образ Nginx
+FROM nginx:latest
+
+# Копируем конфигурационный файл внутрь контейнера
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Копируем стартовую страницу
+COPY index.html /usr/share/nginx/html/
+
+# Открываем порт 8080
+EXPOSE 8080
+```
+Теперь создаём файл nginx.conf с кастомной конфигурацией Nginx
+```sh
+server {
+    listen 8080;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+    }
+}
+```
+Создаём index.html с измененным контентом, после чего
+```sh
+docker build -t custom_nginx .
+docker run -d -p 8080:8080 --name my_nginx custom_nginx
+```
+Проверяет работоспособность `curl`
+```sh
+curl http://localhost:8080
+```
