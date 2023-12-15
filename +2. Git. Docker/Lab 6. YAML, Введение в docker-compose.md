@@ -53,4 +53,74 @@ services:
       # Пробрасываем порты
 ```
 
+# Практическое задание
+Создание приложения Vue.js
+```sh
+# Глобальная установка Vue CLI (если еще не установлен)
+npm install -g @vue/cli
 
+# Создание нового проекта Vue.js
+vue create vue-app
+```
+2. Настройка проксирования через Nginx
+```sh
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        root /path/to/vue-app/dist;  # Укажите путь к директории dist вашего Vue.js приложения
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://backend-server;  # Укажите адрес вашего бэкенд-сервера
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Другие настройки, если необходимо
+}
+```
+3. Сборка и запуск Vue.js приложения
+```sh
+# Перейдите в директорию вашего Vue.js приложения
+cd vue-app
+
+# Установите зависимости
+npm install
+
+# Соберите приложение
+npm run build
+```
+4. Сборка и запуск Docker контейнера с Nginx
+```sh
+# Dockerfile для Nginx
+FROM nginx:latest
+
+# Копируем конфигурацию Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Копируем собранное Vue.js приложение в директорию Nginx
+COPY dist /usr/share/nginx/html
+
+# Открываем порт 80
+EXPOSE 80
+
+# Команда для запуска Nginx в фоновом режиме
+CMD ["nginx", "-g", "daemon off;"]
+```
+5. Сборка и запуск Docker контейнера
+```sh
+# Перейдите в корневую директорию проекта
+cd /path/to/vue-app
+
+# Сборка Docker контейнера
+docker build -t vue-nginx .
+
+# Запуск Docker контейнера
+docker run -p 8080:80 vue-nginx
+```
