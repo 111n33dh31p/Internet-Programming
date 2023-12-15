@@ -84,7 +84,13 @@ docker run -d -p 8083:80 -m 50m nginx
 ```sh
 docker pull jc21/registry-ui - Установка Doker Registry UI 
 ```
-3. Установите Shipyard и подключите к API docker
+3. Установите Shipyard
 ```sh
-docker pull shipyard/shipyard - Установка Shipyard
+docker run -d --privileged -p 8080:8080 shipyard/shipyard
+Эта команда запустит Shipyard в фоновом режиме и прокинет порт 8080 для веб интерфейса.
 ```
+3.1. Подключение к API Docker
+ - После установки Shipyard мы можем подключить его к API Docker.
+ - Войти в веб-интерфейс Shipyard.
+3.2. Настройка подключения к Docker API
+ - Провести соответствующие настройки в разделе Engine или подобном.
