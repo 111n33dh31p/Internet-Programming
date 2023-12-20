@@ -55,3 +55,84 @@ ENV DIRPATH=/path
 WORKDIR $DIRPATH/$DIRNAME
 RUN pwd
 ```
+
+## Практическое задание
+
+1. Cоздайте простое приложение на flask, подключите mongodb;
+2. Уменьшите размер образа;
+3. Используйте пременные окружения, для коннекта к db;
+4. Исключите root из Dockerfile;
+5. Проверьте работоспособность сервисов.
+6. Запустите сборку приложения из 1 задания, в образе Dind и опубликуите полученные образы в публичном репозитории. Разверните приложение локально.
+
+#### 1. Создание простого приложения на Flask с подключением к MongoDB
+app.py
+```sh
+from flask import Flask
+from pymongo import MongoClient
+import os
+
+app = Flask(Proj)
+
+mongo_host = os.environ.get('MONGO_HOST', 'localhost')
+mongo_port = int(os.environ.get('MONGO_PORT', 27017))
+
+client = MongoClient(host=mongo_host, port=mongo_port)
+db = client.mydatabase
+
+@app.route('/')
+def hello():
+    return f'Hello, MongoDB: {db.test_collection.find_one()["message"]}'
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')
+
+```
+requirements.txt
+```sh
+Flask==2.1.2
+pymongo==3.12.0
+```
+
+#### 2. Уменьшение размера образа
+Для уменьшения размера образа можно использовать multi-stage build:
+Dockerfile
+```sh
+FROM python:3.8 as builder
+
+WORKDIR /app
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+FROM python:3.8-slim
+
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
+COPY app.py 
+
+RUN apt-get update && apt-get install -y gcc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/*
+
+USER nobody
+
+CMD ["python", "app.py"]
+```
+
+#### 3. Использование переменных окружения для подключения к БД
+В коде приложения уже используются переменные окружения для подключения к MongoDB.
+
+#### 4. Исключение root из Dockerfile
+Добавили строку USER nobody в Dockerfile.
+
+#### 5. Проверка работоспособности сервисов
+Запускаем сервис локально, предварительно установив MongoDB и проверив, что переменные окружения настроены правильно
+
+#### 6. Сборка и публикация образа в публичном репозитории
+```sh
+docker build -t 111n33dh31p/flask-mongo-app
+
+docker push 111n33dh31p/flask-mongo-app
+```
