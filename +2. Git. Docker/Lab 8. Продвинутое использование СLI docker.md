@@ -161,3 +161,46 @@ $ docker attach web
 | CONTAINER ID | NAME | CPU % | MEM USAGE / LIMIT | MEM % | NET I/0 | BLOCK I/O | PIDS |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
 | 83cf2788fa7b | nginx:alpine | 0.00% | 10.71MiB / 31.42GiB | 0.03% | 84B / 0B | 0B / 8.19kB | 9 |
+
+#### Практическое задание
+1. Запустите контейнер и посотрите информацию о состоянии docker на хосте. Выведите информацию о типе операционной системы на которой установлен docker в файл, этом используйте командку docker info.
+2. Запустите произвольный контейнер. Выполните тестирование производительности в течении 3 минут. Оцените общую производительность во время выполения теста системы. Заморозьте контейнер. Разморозьте контейнер.
+3. Посотрите логи веб сервера apache, когда контейнер находится под тестированием производительности.
+4. Запустите еще один контейнер с mongodb. Посмотрите статистику всех конетйнеров, используя (--format), не включая столбец PIDS. Запишите все результаты в файл.
+5. Изучите дополнительные параметры в тестировании производительности веб приложений.
+6. Используя контейнер nginx, послитайте количество запросов к веб серверу за один день. Представьте статистику стран, с которых осуществлялись запросы на веб сервер (предванительно запустите тесты несколько раз и с разных ip).
+
+##### 1. Информация о Docker и операционной системе
+```sh
+docker info > docker_info.txt
+```
+
+##### 2. Тестирование производительности контейнера
+```sh
+docker run -d --name stress-container stress
+docker stats --no-stream stress-container
+docker pause stress-container
+docker unpause stress-container
+```
+
+##### 3. Просмотр логов веб-сервера Apache
+```sh
+docker ps
+docker logs apache-container
+```
+
+##### 4. Запуск контейнера MongoDB и вывод статистики
+```sh
+docker run -d --name mongo-container mongo
+docker stats --format "table {{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" $(docker ps -q) > container_stats.txt
+```
+
+##### 5. Дополнительные параметры в тестировании производительности
+ - Использование опции --format для более читаемого вывода.
+ - Использование флагов --format "table {{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" в docker stats для форматирования вывода.
+##### 6. Статистика запросов к веб-серверу Nginx
+```sh
+docker run -d --name nginx-container -p 80:80 nginx
+ab -n 1000 -c 10 http://localhost/
+docker exec nginx-container cat /var/log/nginx/access.log | awk '{print $1}' | sort | uniq -c > requests_by_country.txt
+```
