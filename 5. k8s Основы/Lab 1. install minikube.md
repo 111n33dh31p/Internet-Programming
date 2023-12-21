@@ -1,3 +1,4 @@
+
 # Установка Minikube
 ### Установка kubectl
 ```sh
@@ -74,11 +75,160 @@ root@Ubunty-22:/home/noneraspad# curl -Lo minikube https://storage.googleapis.co
 |  34 89.3M |  34 30.7M  |    0    |  1316k  |    0   | 0:01:09 | 0:00:23 | 0:00:46 |  2048k  |
 ```
 
+root@Ubunty-22:/home/noneraspad# sudo mkdir -p /usr/local/bin/
+root@Ubunty-22:/home/noneraspad# sudo install minikube /usr/local/bin/
+
+Чтобы убедиться в том, что гипервизор и Minikube были установлены корректно, выполняем следующую команду, которая запускает локальный кластер Kubernetes:
+
+#### VirutalBox
+```sh
+root@Ubunty-22:/home/noneraspad# minikube start --driver=virtualbox   
+😄  minikube v1.32.0 on Ubuntu 22.04 (vbox/amd64)   
+✨  Using the virtualbox driver based on user configuration   
+🤷  Exiting due to PROVIDER_VIRTUALBOX_NOT_FOUND: The 'virtualbox' provider was not found: unable to find VBoxManage in $PATH   
+💡  Suggestion: Install VirtualBox
+📘  Documentation: https://minikube.sigs.k8s.io/docs/reference/drivers/virtualbox/
+```
+
+#### Docker
+```sh
+root@Ubunty-22:/home/noneraspad# minikube start --driver=docker
+😄  minikube v1.32.0 on Ubuntu 22.04 (vbox/amd64)
+✨  Using the docker driver based on user configuration
+🛑  The "docker" driver should not be used with root privileges. If you wish to continue as root, use --force.
+💡  If you are running minikube within a VM, consider using --driver=none:
+📘    https://minikube.sigs.k8s.io/docs/reference/drivers/none/
+```
+
+`❌  Exiting due to DRV_AS_ROOT: The "docker" driver should not be used with root privileges.`
+`###################################################################################################################################`
+Решение следующее:   
+```sh
+minikube start --driver=none
+```
+
+`❌  Exiting due to GUEST_MISSING_CONNTRACK: Sorry, Kubernetes 1.28.3 requires conntrack to be installed in root's path`
+`###################################################################################################################################`
+Решение следующее:   
+```sh
+sudo apt update && sudo apt upgrade
+wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.26.0/crictl-v1.26.0-linux-amd64.tar.gz
+minikube start docker --force
+```
+Запустим minikube:
+```sh
+root@Ubunty-22:/home/noneraspad# minikube start docker --force
+😄  minikube v1.32.0 on Ubuntu 22.04 (vbox/amd64)
+❗  minikube skips various validations when --force is supplied; this may lead to unexpected behavior
+✨  Automatically selected the docker driver. Other choices: none, ssh
+🛑  The "docker" driver should not be used with root privileges. If you wish to continue as root, use --force.
+💡  If you are running minikube within a VM, consider using --driver=none:
+📘    https://minikube.sigs.k8s.io/docs/reference/drivers/none/
+🧯  The requested memory allocation of 1959MiB does not leave room for system overhead (total system memory: 1959MiB). You may face stability issues.
+💡  Suggestion: Start minikube with less memory allocated: 'minikube start --memory=1959mb'
+📌  Using Docker driver with root privileges
+👍  Starting control plane node minikube in cluster minikube
+🚜  Pulling base image ...
+💾  Downloading Kubernetes v1.28.3 preload ...
+    > gcr.io/k8s-minikube/kicbase...:  453.90 MiB / 453.90 MiB  100.00% 6.09 Mi
+    > preloaded-images-k8s-v18-v1...:  403.35 MiB / 403.35 MiB  100.00% 5.11 Mi
+🔥  Creating docker container (CPUs=2, Memory=1959MB) ...
+🐳  Preparing Kubernetes v1.28.3 on Docker 24.0.7 ...
+    ▪ Generating certificates and keys ...
+    ▪ Booting up control plane ...
+    ▪ Configuring RBAC rules ...
+🔗  Configuring bridge CNI (Container Networking Interface) ...
+🔎  Verifying Kubernetes components...
+❗  Executing "docker container inspect minikube --format={{.State.Status}}" took an unusually long time: 7.204066296s
+💡  Restarting the docker service may improve performance.
+    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
+🌟  Enabled addons: default-storageclass, storage-provisioner
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+root@Ubunty-22:/home/noneraspad# 
+```
 
 
+Убедимся что minikube запущен:
+```sh
+root@Ubunty-22:/home/noneraspad# minikube status
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+root@Ubunty-22:/home/noneraspad#
+```
 
-### Настройка автодополнения команд
-
-
+Если же minikube был запущен без ключа(--vm-driver), то следует пересоздать его, при помощи:
+```sh
+minikube stop
+minikube delete
+minikube start --driver=virtualbox
+```
 
 ### Краткое знакомство с кластером
+Создаём развёртывание в Kubernetes, использую образ echoserver(простой HTTP-сервер)
+```sh
+root@Ubunty-22:/home/noneraspad# kubectl create deployment hello-minikube --image=k8s.gcr.io/echoserver:1.10
+deployment.apps/hello-minikube created
+root@Ubunty-22:/home/noneraspad#
+```
+
+Проверим, что всё работает
+```sh
+root@Ubunty-22:/home/noneraspad# kubectl get pod
+|               NAME              | READY |  STATUS  | RESTARTS | AGE |        
+| ------------------------------- | ----- | -------- | -------- | --- |
+| hello-minikube-77d966488c-fnfhf |  1/1  | Running  |     0    | 80s |
+root@Ubunty-22:/home/noneraspad#
+```
+
+Для получения доступа к объекту извне, создаём объект сервиса
+```sh
+root@Ubunty-22:/home/noneraspad# kubectl expose deployment hello-minikube --type=NodePort --port=8080
+service/hello-minikube exposed
+root@Ubunty-22:/home/noneraspad# 
+```
+Узнаем URL адрес сервиса
+```sh
+root@Ubunty-22:/home/noneraspad# minikube service hello-minikube --url
+http://192.168.49.2:32423
+root@Ubunty-22:/home/noneraspad#
+```
+![Image alt](https://github.com/noneraspad/Storage/blob/main/VirtualBoxVM_UrZQGCoY3i.png)
+
+Удаляем наш сервис hello-minikube:
+```sh
+root@Ubunty-22:/home/noneraspad# kubectl delete services hello-minikube
+service "hello-minikube" deleted
+root@Ubunty-22:/home/noneraspad#
+```
+
+Удаляем развёртывание:
+```sh
+root@Ubunty-22:/home/noneraspad# kubectl delete deployment hello-minikube
+deployment.apps "hello-minikube" deleted
+root@Ubunty-22:/home/noneraspad#
+```
+
+# Практическое задание
+1. Повторите практические примеры
+2. Ознакомьтесь с minikube dashboard, выполнив данную команду в консоли;
+3. Подробно рассмотрите команду minikube --help
+
+1. Все примеры, которые были в лабе - есть в этом md.
+2. 
+```sh
+root@Ubunty-22:/home/noneraspad# minikube dashboard
+🔌  Enabling dashboard ...
+    ▪ Using image docker.io/kubernetesui/dashboard:v2.7.0
+    ▪ Using image docker.io/kubernetesui/metrics-scraper:v1.0.8
+💡  Some dashboard features require the metrics-server addon. To enable all features please run:
+	minikube addons enable metrics-server	
+🤔  Verifying dashboard health ...
+🚀  Launching proxy ...
+🤔  Verifying proxy health ...
+http://127.0.0.1:39175/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
+```
+3. Подробно рассмотрел команду minikube --help
